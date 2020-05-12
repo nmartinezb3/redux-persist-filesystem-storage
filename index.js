@@ -103,7 +103,23 @@ const FilesystemStorage = {
         }
       }),
 
-    clear: undefined // Workaround for Flow error coming from `clear` not being part of object literal
+    clear: undefined, // Workaround for Flow error coming from `clear` not being part of object literal
+
+    multiGet: onStorageReady(
+      (keys: string[], callback?: (error: ?Error, result: ?(Array<number> | string)) => void) =>
+        Promise.all(
+          keys.map(key => {
+            const filePath = pathForKey(options.toFileName(key));
+            return RNFetchBlob.fs
+              .readFile(filePath, options.encoding)
+          })
+        ).then(data => {
+          callback && callback(null, data);
+          if (!callback) {
+            return data;
+          }
+        })
+  ),
 };
 
 FilesystemStorage.clear = (callback?: (error: ?Error, allKeysCleared: boolean | void) => void) =>
